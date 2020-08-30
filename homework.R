@@ -5,22 +5,23 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 ### EXERCISE 1
 
-set.seed(0)
-
 f <- function(x) 10 * exp(-5 * (x - 3) ** 4)
-p <- function(x) dnorm(x, mean=0, sd=1, log=FALSE)
+p <- function(x) dnorm(x, mean=0, sd=1)
 g <- function(x) f(x) * p(x)
 
 # quadrature method
 I1 <- integrate(g, -Inf, Inf)$value
 
 # monte carlo
+set.seed(1)
 x <- rnorm(100, mean=0, sd=1)
 fx <- f(x)
 V2 <- var(fx)
+se <- sd(fx) / 10
 I2 <- mean(fx)
 
 # repeated monte carlo
+set.seed(1)
 I3 <- numeric()
 ci <- numeric()
 for (i in 1:1000){
@@ -34,26 +35,23 @@ for (i in 1:1000){
 
 mean(ci)
 
-mean(I3)
-err <- sd(I3) * qnorm(0.95)/sqrt(1000)
-mean(I3) - err
-I1
-mean(I3) + err
+se <- sd(I3) / sqrt(1000)
 
 # importance sampling
-x2 <- rnorm(100, mean=3, sd=0.8)
-h <- function(x) g(x) / dnorm(x, mean=2.5, sd=.6)
-f2x <- h(x2)
+set.seed(1)
+x2 <- rnorm(100, mean=2.5, sd=.5)
+h <- function(x) dnorm(x, mean=2.5, sd=.5)
+f2x <- g(x2) / h(x2)
 I4 <- mean(f2x)
 V4 <- var(f2x)
 
-
-xx <- seq(1, 4, 0.005)
-plot(xx, h(xx), col='red', type='l')
-points(xx, g(xx), type='l')
+# compare shapes of integrated function and surrogate distribution
+xx <- seq(0, 8, 0.005)
+plot(xx, h(xx), col='red', type='l') # surrogate
+points(xx, g(xx), type='l') # f(x) * p(x)
 
 # rejection sampling
-
+set.seed(1)
 M <- 4 / sqrt(2*pi)
 i <- 1
 env <- function(x) dlogis(x, location=0, scale=1)
@@ -73,6 +71,7 @@ V5 <- var(fx3)
 I5 <- mean(fx3)
 
 # metropolis hastings
+set.seed(1)
 chain_rule1 <- function(x, delta){
   runif(1, x - delta, x + delta)
 }
@@ -97,7 +96,22 @@ mh <- function(x0, n, proposal, p){
   return(list(x=x, rejection_rate=rej/n))
 }
 
-x4 <- mh(0, 100, function(x) chain_rule1(x, 2), p)
+grid <- seq(0.1, 10, 0.1)
+tmp_f <- function(delta) mh(0, 100, function(x) chain_rule1(x, delta), p)
+tmp_var <- numeric()
+tmp_ess <- numeric()
+for (i in 1:length(grid)){
+  chain <- tmp_f(grid[i])
+  tmp_values <- f(as.numeric(chain$x))
+  tmp_var[i] <- var(tmp_values)
+  tmp_ess[i] <- ess(chain$x)
+}
+
+plot(grid, tmp_var, type='l')
+plot(grid, tmp_ess, type='l')
+
+
+x4 <- mh(0, 100, function(x) chain_rule1(x, 5), p)
 x4$rejection_rate
 fx4 <- f(as.numeric(x4$x))
 
@@ -133,10 +147,16 @@ chain_rule4 <- function(x){
   return(y)
 }
 
-chain_rule_best <- function(x){
+chain_rule_better <- function(x){
   y1 <- runif(1, x[1] - 5, x[1] + 5)
   y2 <- runif(1, x[2] - 5, x[2] + 5)
   y <- c(y1, y2)
+  return(y)
+}
+
+chain_rule_best <- function(x){
+  ro <- ifelse(x[2] < 0, .9, -0.9)
+  y <- rmvnorm(1, mean=x, sigma=matrix(c(4, 4 * ro, 4 * ro, 9), nrow=2))
   return(y)
 }
 
