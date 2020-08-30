@@ -78,7 +78,47 @@
             \caption{Rejection rates and effective sample sizes for the tree proposal distributions.}
             \label{tab:rules}
         \end{table}
-    \item D
+    \item Metropolis-Hastings sampler for Bayesian logistic regression
+    \begin{itemize}
+        \item The function, proportional to the posterior distribution is the product of the normal density (with $\sigma^2 = 100$) and the logistic regression likelihood (with an added intercept parameter).
+        \item In Table \ref{tab:log} the rejection rates and effective sample sizes for each of the 4 independent chains are presented. Some concerns arise because of the extremely high rejection rates (with high autocorrelations and small ESS direct consequences). Note for example that on 10000 samples, we get ESSes as small as 20.
+        \begin{table}
+            \begin{tabular}{l|l|llllll}
+             & Rej. rate & ESS $(\beta_1)$ & ESS $(\beta_2)$ & ESS $(\beta_3)$ & ESS $(\beta_4)$ & ESS $(\beta_5)$ & ESS $(\beta_6)$ \\ \hline
+            $x_1$ & 0.979 & 36.0 & 74.1 & 72.8 & 41.2 & 113.0 & 102.2 \\
+            $x_2$ & 0.984 & 29.7 & 53.9 & 76.7 & 49.2 & 63.6 & 114.0 \\
+            $x_3$ & 0.981 & 21.4 & 43.5 & 60.4 & 73.9 & 38.4 & 55.2 \\
+            $x_4$ & 0.977 & 53.4 & 45.6 & 110.3 & 89.0 & 79.4 & 58.9 \\ \hline
+            best & 0.867 & 196.8 & 160.4 & 475.7 & 134.7 & 207.7 &  104.2 \\
+            \end{tabular}
+            \caption{Starting points are independently normally distributed around 0. The irrelevant parameters (by construction of the toy dataset) are $\beta_4$ and $\beta_5$, while $\beta_6$ is the intercept coefficient. The best-performing sampler is included for easier comparisons.}
+            \label{tab:log}
+        \end{table}
+        \item The covariance matrix of the best performing sampler is diag(.5, .5, .5, .1, .1, .1). The results are presented in the last line of Table \ref{tab:log}. The efficiency is improved, but it still isn't great. In Figure \ref{fig:log} a comparison between traceplots is shown. We can clearly see how often is the bad sampler stuck in some point (rejecting the new proposals).
+        \begin{figure}
+            \centering
+            \includegraphics[width=.48\textwidth]{trace_bad.pdf}
+            \hfill
+            \includegraphics[width=.48\textwidth]{trace_best.pdf}
+            \caption{Traceplots for the parameter $\beta_1$ from the 2nd chain of the bad sampler (left) and from the best sampler (right). }
+            \label{fig:log}
+        \end{figure}
+        \item In Table \ref{tab:post} the estimates of the parameters, obtained from the posterior distribution, are shown. Additionally, the posterior probability $P(|\beta_3| > \frac{1}{10} | data) = 0.80$ with $SE = 0.003$.
+        \begin{table}
+            \centering
+            \begin{tabular}{l|ll|l}
+             & estimate & standard error & ground truth \\ \hline
+            $\beta_1$ & 3.41 & 0.05 & 3 \\
+            $\beta_2$ & 2.23 & 0.04 & -2 \\
+            $\beta_3$ & -0.19 & 0.01 & 0.1 \\
+            $\beta_4$ & -0.00 & 0.03 & 0 \\
+            $\beta_5$ & 0.49 & 0.02 & 0 \\
+            $\beta_6$ & -0.69 & 0.03 & 0
+            \end{tabular}
+            \caption{The obtained estimates are not accurate (notice for example the estimate for $\beta_2$, which is completely wrong). I suspect the irrelevant parameters have a really bad influence on the results.}
+            \label{tab:post}
+        \end{table}
+    \end{itemize}
 
 \end{enumerate}
 

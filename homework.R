@@ -143,7 +143,7 @@ chain_rule3 <- function(x){
 }
 
 chain_rule4 <- function(x){
-  y <- rmvnorm(1, mean=x, sigma=diag(c(16, 25)))
+  y <- rmvnorm(1, mean=x, sigma=diag(c(121, 144)))
   return(y)
 }
 
@@ -155,7 +155,7 @@ chain_rule_better <- function(x){
 }
 
 chain_rule_best <- function(x){
-  ro <- ifelse(x[2] < 0, .9, -0.9)
+  ro <- ifelse(x[1] < 0, .9, -0.9)
   y <- rmvnorm(1, mean=x, sigma=matrix(c(4, 4 * ro, 4 * ro, 9), nrow=2))
   return(y)
 }
@@ -177,7 +177,7 @@ for (i in 1:length(xs)){
 df <- data.frame(x=as.numeric(xxs), y=as.numeric(yys), z=as.numeric(z))
 
 starting_points <- matrix(c(0, 20, -10, 5, -15, -10), nrow=3, ncol=2)
-rules <- list(chain_rule2, chain_rule3, chain_rule_best)
+rules <- list(chain_rule2, chain_rule3, chain_rule4)
 
 chains <- list()
 rejections <- list()
@@ -267,13 +267,14 @@ acf(chains_tmp[[2]][,4])
 acf(chains_tmp[[3]][,5])
 acf(chains_tmp[[3]][,6])
 
-df <- as.data.frame(chains_tmp[[3]])
+df <- as.data.frame(chains_tmp[[2]])
 df$ID <- 1:10000
 
 # traceplot (play with y=V1, ... V6 for changing between variables)
 g1 <- ggplot(df, aes(x = ID, y = V1)) + 
   geom_line()
 plot(g1)
+ggsave('trace_bad.pdf', plot=g1, dpi=600, width=5)
 
 # improved proposal
 
@@ -285,7 +286,7 @@ sigma1[4,] <- rep(0, 6)
 sigma1[5,] <- rep(0, 6)
 sigma1[6,] <- c(0, 0, 0, 0, 0, 1)
 sigma2 <- diag(c(10, 10, 5, 1, 1, 2))
-sigma3 <- diag(c(.5, .5, .5, .1, .1, .5))
+sigma3 <- diag(c(.5, .5, .5, .1, .1, .1))
 sigma4 <- diag(rep(.1, 6))
 sigma5 <- diag(rep(.4, 6))
 
@@ -319,6 +320,7 @@ df2$ID <- 1:10000
 g2 <- ggplot(df2, aes(x = ID, y = V1)) + 
   geom_line()
 plot(g2)
+ggsave('trace_best.pdf', plot=g2, dpi=600, width=5)
 
 # posterior means of parameters
 beta_est <- mcse.mat(chains_tmp2)
